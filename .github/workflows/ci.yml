@@ -1,18 +1,13 @@
-# Créer le dossier
-New-Item -Path ".github/workflows" -ItemType Directory -Force
-
-# Contenu du fichier
-$content = @"
-name: CI Pipeline Advanced
+name: CI Pipeline
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
-  build-and-test:
+  build:
     runs-on: ubuntu-latest
     
     steps:
@@ -29,42 +24,12 @@ jobs:
     - name: Build with Maven
       run: mvn clean compile
     
-    - name: Run unit tests
+    - name: Run tests
       run: mvn test
     
-    - name: Run integration tests
-      run: mvn verify
-    
-    - name: Generate coverage report
-      run: mvn jacoco:report
-    
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v4
-      with:
-        files: ./target/site/jacoco/jacoco.xml
-        fail_ci_if_error: false
-    
-    - name: Generate test report
-      if: always()
-      uses: dorny/test-reporter@v1
-      with:
-        name: Maven Tests
-        path: target/surefire-reports/*.xml
-        reporter: java-junit
-        fail-on-error: true
-    
-    - name: Archive test results
+    - name: Upload test results
       if: always()
       uses: actions/upload-artifact@v4
       with:
         name: test-results
-        path: |
-          target/surefire-reports/
-          target/site/jacoco/
-"@
-
-# Écrire sans BOM (UTF-8 sans BOM)
-$utf8NoBom = New-Object System.Text.UTF8Encoding $false
-[System.IO.File]::WriteAllText(".github/workflows/ci.yml", $content, $utf8NoBom)
-
-Write-Host "CI pipeline created successfully (UTF-8 no BOM)!" -ForegroundColor Green
+        path: target/surefire-reports/
