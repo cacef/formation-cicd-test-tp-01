@@ -1,9 +1,9 @@
-# Créer la structure des dossiers
+# Créer le dossier
 New-Item -Path ".github/workflows" -ItemType Directory -Force
 
-# Créer le fichier ci.yml
-@"
-name: CI Pipeline
+# Contenu du fichier
+$content = @"
+name: CI Pipeline Advanced
 
 on:
   push:
@@ -12,7 +12,7 @@ on:
     branches: [ main ]
 
 jobs:
-  build:
+  build-and-test:
     runs-on: ubuntu-latest
     
     steps:
@@ -29,8 +29,20 @@ jobs:
     - name: Build with Maven
       run: mvn clean compile
     
-    - name: Run tests
+    - name: Run unit tests
       run: mvn test
+    
+    - name: Run integration tests
+      run: mvn verify
+    
+    - name: Generate coverage report
+      run: mvn jacoco:report
+    
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v4
+      with:
+        files: ./target/site/jacoco/jacoco.xml
+        fail_ci_if_error: false
     
     - name: Generate test report
       if: always()
@@ -41,12 +53,18 @@ jobs:
         reporter: java-junit
         fail-on-error: true
     
-    - name: Upload test results
+    - name: Archive test results
       if: always()
       uses: actions/upload-artifact@v4
       with:
         name: test-results
-        path: target/surefire-reports/
-"@ | Out-File -FilePath ".github/workflows/ci.yml" -Encoding UTF8
+        path: |
+          target/surefire-reports/
+          target/site/jacoco/
+"@
 
-Write-Host "CI pipeline created successfully!" -ForegroundColor Green
+# Écrire sans BOM (UTF-8 sans BOM)
+$utf8NoBom = New-Object System.Text.UTF8Encoding $false
+[System.IO.File]::WriteAllText(".github/workflows/ci.yml", $content, $utf8NoBom)
+
+Write-Host "CI pipeline created successfully (UTF-8 no BOM)!" -ForegroundColor Green
